@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family To-Do List</title>
+  
+  <style>
+    body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; padding: 20px; background-color: #f4f9f9; overflow-y: auto; box-sizing: border-box; }
+    .hidden { display: none !important; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: white; padding: 40px; border-radius: 8px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 90%; max-width: 400px; }
+    .modal-content select { width: 100%; padding: 12px; margin: 20px 0; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+    .login-btn { width: 100%; font-size: 16px; padding: 12px; }
+    .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .logout-btn { background-color: #dc3545; padding: 8px 16px; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .logout-btn:hover { background-color: #c82333; }
+    .my-section { border: 2px solid #28a745 !important; background-color: #eafbee !important; transform: scale(1.02); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.15) !important; }
+    .app-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 600px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+    .section { margin-bottom: 20px; background-color: #f8fcfc; padding: 15px; border-radius: 6px; border: 1px solid #eee; transition: all 0.3s ease; }
+    h2 { text-align: center; margin-top: 0; color: #333; }
+    input[type="text"] { width: calc(100% - 40px); padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+    .datetime-row { display: flex; gap: 5px; margin-bottom: 10px; width: calc(100% - 40px); align-items: center; }
+    .today-label { display: flex; align-items: center; font-size: 12px; color: #333; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 7px 6px; cursor: pointer; }
+    .today-label input { margin-right: 4px; cursor: pointer; }
+    .datetime-row select { flex: 1; padding: 8px 2px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; background-color: white; font-size: 13px; }
+    .add-btn { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: calc(33.3% - 10px); }
+    .add-btn:hover { background-color: #218838; }
+    ul { list-style-type: none; padding: 0; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 10px; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); flex-wrap: wrap; gap: 10px; border-left: 4px solid #28a745; transition: all 0.3s ease; }
+    li.completed { text-decoration: line-through; color: gray; opacity: 0.6; border-left-color: gray; }
+    .task-text { flex-grow: 1; }
+    .time { font-weight: bold; color: #6c757d; }
+    .time-expired { color: red; }
+    .countdown { font-weight: bold; color: #17a2b8; }
+    .countdown-expired { color: red; }
+    .delete-btn { background: #dc3545; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; width: auto; }
+    .delete-btn:hover { background-color: #c82333; }
+    input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div id="loginModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2>Family To-Do List</h2>
+    <p>Please select your profile to view your tasks.</p>
+    <select id="userSelect">
+      <option value="armaan">Armaan</option>
+      <option value="suhaani">Suhaani</option>
+      <option value="dad">Dad</option>
+      <option value="mom">Mom</option>
+    </select>
+    <button id="loginBtn" class="login-btn add-btn">Log In</button>
+  </div>
+</div>
+
+<div id="appWrapper" class="app-wrapper hidden">
+  <div class="header">
+    <h2 id="welcomeText" style="margin: 0;">Welcome!</h2>
+    <button id="logoutBtn" class="logout-btn">Log Out</button>
+  </div>
+
+  <div class="container">
+    <div class="section" id="armaanSection">
+      <h2>Armaan's Tasks</h2>
+      <input type="text" data-target="armaanList" placeholder="Add a new task...">
+      <div class="datetime-row">
+        <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
+        <select class="year-select"></select>
+        <select class="month-select"><option value="" disabled selected>M</option><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+        <select class="day-select"><option value="" disabled selected>D</option></select>
+        <select class="hour-select"><option value="" disabled selected>Hr</option></select>
+        <select class="minute-select"><option value="" disabled selected>Min</option></select>
+        <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+      </div>
+      <button class="add-btn">Add</button>
+      <ul id="armaanList"></ul>
+    </div>
+    
+    <div class="section" id="suhaaniSection">
+      <h2>Suhaani's Tasks</h2>
+      <input type="text" data-target="suhaaniList" placeholder="Add a new task...">
+      <div class="datetime-row">
+        <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
+        <select class="year-select"></select>
+        <select class="month-select"><option value="" disabled selected>M</option><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+        <select class="day-select"><option value="" disabled selected>D</option></select>
+        <select class="hour-select"><option value="" disabled selected>Hr</option></select>
+        <select class="minute-select"><option value="" disabled selected>Min</option></select>
+        <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+      </div>
+      <button class="add-btn">Add</button>
+      <ul id="suhaaniList"></ul>
+    </div>
+    
+    <div class="section" id="dadSection">
+      <h2>Dad's Tasks</h2>
+      <input type="text" data-target="dadList" placeholder="Add a new task...">
+      <div class="datetime-row">
+        <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
+        <select class="year-select"></select>
+        <select class="month-select"><option value="" disabled selected>M</option><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+        <select class="day-select"><option value="" disabled selected>D</option></select>
+        <select class="hour-select"><option value="" disabled selected>Hr</option></select>
+        <select class="minute-select"><option value="" disabled selected>Min</option></select>
+        <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+      </div>
+      <button class="add-btn">Add</button>
+      <ul id="dadList"></ul>
+    </div>
+    
+    <div class="section" id="momSection">
+      <h2>Mom's Tasks</h2>
+      <input type="text" data-target="momList" placeholder="Add a new task...">
+      <div class="datetime-row">
+        <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
+        <select class="year-select"></select>
+        <select class="month-select"><option value="" disabled selected>M</option><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+        <select class="day-select"><option value="" disabled selected>D</option></select>
+        <select class="hour-select"><option value="" disabled selected>Hr</option></select>
+        <select class="minute-select"><option value="" disabled selected>Min</option></select>
+        <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+      </div>
+      <button class="add-btn">Add</button>
+      <ul id="momList"></ul>
+    </div>
+    
+    <div class="section" id="entireFamilySection">
+      <h2>Entire Family</h2>
+      <input type="text" data-target="entireFamilyList" placeholder="Add a family task...">
+      <div class="datetime-row">
+        <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
+        <select class="year-select"></select>
+        <select class="month-select"><option value="" disabled selected>M</option><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+        <select class="day-select"><option value="" disabled selected>D</option></select>
+        <select class="hour-select"><option value="" disabled selected>Hr</option></select>
+        <select class="minute-select"><option value="" disabled selected>Min</option></select>
+        <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+      </div>
+      <button class="add-btn">Add</button>
+      <ul id="entireFamilyList"></ul>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJgVXnV2E1vKngH9xkjFoTEA7ZyuEwE6s",
+    authDomain: "family-todolist-gulati.firebaseapp.com",
+    projectId: "family-todolist-gulati",
+    storageBucket: "family-todolist-gulati.firebasestorage.app",
+    messagingSenderId: "375765552726",
+    appId: "1:375765552726:web:c5f4af5771625c0b2b5f7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // --- NOTIFICATION SYSTEM ---
+  // Ask the browser for permission to send pop-ups!
+  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+
+  function sendNotification(title, bodyText) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body: bodyText });
+    }
+  }
+
+  // --- UI SETUP & TODAY LOGIC ---
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth().toString();
+  const currentDay = now.getDate().toString();
+
+  document.querySelectorAll('.year-select').forEach(select => { for (let i = 2026; i <= 2030; i++) { let opt = document.createElement('option'); opt.value = i; opt.textContent = i; select.appendChild(opt); } });
+  document.querySelectorAll('.day-select').forEach(select => { for (let i = 1; i <= 31; i++) { let opt = document.createElement('option'); opt.value = i; opt.textContent = i; select.appendChild(opt); } });
+  document.querySelectorAll('.hour-select').forEach(select => { for (let i = 1; i <= 12; i++) { let opt = document.createElement('option'); opt.value = i; opt.textContent = i; select.appendChild(opt); } });
+  document.querySelectorAll('.minute-select').forEach(select => { for (let i = 0; i <= 59; i++) { let opt = document.createElement('option'); let val = i.toString().padStart(2, '0'); opt.value = val; opt.textContent = val; select.appendChild(opt); } });
+
+  function resetToToday(section) {
+    const todayCheck = section.querySelector('.today-check');
+    const yearSel = section.querySelector('.year-select');
+    const monthSel = section.querySelector('.month-select');
+    const daySel = section.querySelector('.day-select');
+    todayCheck.checked = true; yearSel.value = currentYear.toString(); monthSel.value = currentMonth; daySel.value = currentDay;
+  }
+
+  document.querySelectorAll('.section').forEach(section => {
+    resetToToday(section); 
+    const todayCheck = section.querySelector('.today-check');
+    const yearSel = section.querySelector('.year-select');
+    const monthSel = section.querySelector('.month-select');
+    const daySel = section.querySelector('.day-select');
+
+    todayCheck.addEventListener('change', (e) => {
+      if (e.target.checked) { yearSel.value = currentYear.toString(); monthSel.value = currentMonth; daySel.value = currentDay; } 
+      else { yearSel.value = "2026"; monthSel.value = ""; daySel.value = ""; }
+    });
+
+    const uncheckToday = () => { todayCheck.checked = false; };
+    yearSel.addEventListener('change', uncheckToday);
+    monthSel.addEventListener('change', uncheckToday);
+    daySel.addEventListener('change', uncheckToday);
+  });
+
+  // --- ACCOUNT & LOGIN LOGIC ---
+  const loginModal = document.getElementById('loginModal');
+  const appWrapper = document.getElementById('appWrapper');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userSelect = document.getElementById('userSelect');
+  const welcomeText = document.getElementById('welcomeText');
+
+  function checkLoginState() {
+    const activeUser = localStorage.getItem('familyActiveUser');
+    if (activeUser) {
+      loginModal.classList.add('hidden'); appWrapper.classList.remove('hidden');
+      welcomeText.textContent = `Welcome, ${activeUser.charAt(0).toUpperCase() + activeUser.slice(1)}!`;
+      
+      // Request permission again if they didn't grant it yet, now that they've interacted with the page
+      if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('hidden'); section.classList.remove('my-section');
+        if (section.id === `${activeUser}Section`) section.classList.add('my-section');
+      });
+    } else {
+      loginModal.classList.remove('hidden'); appWrapper.classList.add('hidden');
+    }
+  }
+
+  loginBtn.addEventListener('click', () => { localStorage.setItem('familyActiveUser', userSelect.value); checkLoginState(); });
+  logoutBtn.addEventListener('click', () => { localStorage.removeItem('familyActiveUser'); checkLoginState(); });
+  checkLoginState(); 
+
+  // --- FIREBASE REAL-TIME LISTENERS ---
+  const familyLists = ['armaanList', 'suhaaniList', 'dadList', 'momList', 'entireFamilyList'];
+  const initialLoad = { armaanList: true, suhaaniList: true, dadList: true, momList: true, entireFamilyList: true };
+  
+  familyLists.forEach(listId => {
+    onSnapshot(collection(db, listId), (snapshot) => {
+      const ul = document.getElementById(listId);
+      ul.innerHTML = ''; 
+      
+      // Check for completely NEW tasks to send a notification
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added" && !initialLoad[listId]) {
+            const activeUser = localStorage.getItem('familyActiveUser');
+            // Only alert if the task was added to MY list or the Entire Family list
+            if (listId === `${activeUser}List` || listId === 'entireFamilyList') {
+                sendNotification("🆕 New Task Assigned!", `Someone added a new task to your list!`);
+            }
+        }
+      });
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        createTaskElement(listId, doc.id, data.text, data.deadline, data.completed);
+      });
+      sortList(listId);
+      
+      // Turn off initial load flag after the first run so we don't spam 100 notifications on refresh
+      initialLoad[listId] = false; 
+    });
+  });
+
+  const addButtons = document.querySelectorAll('.add-btn');
+  addButtons.forEach(button => {
+    if(button.id === "loginBtn") return; 
+    
+    button.addEventListener('click', async function(event) {
+      event.preventDefault(); 
+      const section = this.parentElement;
+      const textInput = section.querySelector('input[type="text"]');
+      const yearSelect = section.querySelector('.year-select');
+      const monthSelect = section.querySelector('.month-select');
+      const daySelect = section.querySelector('.day-select');
+      const hourSelect = section.querySelector('.hour-select');
+      const minuteSelect = section.querySelector('.minute-select');
+      const ampmSelect = section.querySelector('.ampm-select');
+
+      const taskText = textInput.value.trim();
+      if (taskText === '') { alert('⚠️ Please enter a task first!'); return; }
+
+      let datetimeText = "";
+      const timeFieldsFilled = (hourSelect.value !== "") + (minuteSelect.value !== "") + (ampmSelect.value !== "");
+      const dateFieldsFilled = (monthSelect.value !== "") + (daySelect.value !== "");
+
+      if (timeFieldsFilled === 0) {
+        datetimeText = "";
+      } else if (timeFieldsFilled === 3 && dateFieldsFilled === 2) {
+        const selectedYear = parseInt(yearSelect.value);
+        let hours24 = parseInt(hourSelect.value);
+        if (ampmSelect.value === 'PM' && hours24 !== 12) hours24 += 12;
+        if (ampmSelect.value === 'AM' && hours24 === 12) hours24 = 0;
+        const tempDate = new Date(selectedYear, parseInt(monthSelect.value), parseInt(daySelect.value), hours24, parseInt(minuteSelect.value));
+        datetimeText = tempDate.toISOString();
+      } else {
+        alert('⚠️ To set a deadline, please make sure the Date and Time are fully selected! Otherwise, leave the Time blank.');
+        return;
+      }
+
+      const targetId = textInput.getAttribute('data-target');
+      
+      try {
+        await addDoc(collection(db, targetId), {
+          text: taskText, deadline: datetimeText, completed: false, timestamp: new Date().getTime()
+        });
+        textInput.value = ''; resetToToday(section);
+        hourSelect.selectedIndex = 0; minuteSelect.selectedIndex = 0; ampmSelect.selectedIndex = 0;
+      } catch (e) {
+        console.error("❌ Error adding document: ", e);
+      }
+    });
+  });
+
+  function createTaskElement(targetId, docId, taskText, datetimeText, isCompleted) {
+    const ul = document.getElementById(targetId);
+    if (!ul) return;
+    const li = document.createElement('li'); li.setAttribute('data-deadline', datetimeText); 
+    const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = isCompleted;
+    if (isCompleted) li.classList.add('completed');
+    
+    checkbox.addEventListener('change', async function() {
+      try { await updateDoc(doc(db, targetId, docId), { completed: this.checked }); } catch(e) { console.error(e); }
+    });
+    li.appendChild(checkbox);
+
+    const taskSpan = document.createElement('span'); taskSpan.textContent = taskText; taskSpan.className = 'task-text'; li.appendChild(taskSpan);
+
+    let deadlineDate = null; let timerInterval = null; let formattedDisplay = 'No Deadline';
+    if (datetimeText) {
+      deadlineDate = new Date(datetimeText);
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const dayName = daysOfWeek[deadlineDate.getDay()]; const monthName = fullMonths[deadlineDate.getMonth()];
+      const j = deadlineDate.getDate() % 10, k = deadlineDate.getDate() % 100;
+      const dayNum = (j == 1 && k != 11) ? deadlineDate.getDate() + "st" : (j == 2 && k != 12) ? deadlineDate.getDate() + "nd" : (j == 3 && k != 13) ? deadlineDate.getDate() + "rd" : deadlineDate.getDate() + "th";
+      let hours = deadlineDate.getHours(); const minutes = deadlineDate.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12; hours = hours ? hours : 12; 
+      formattedDisplay = `Deadline: ${dayName}, ${monthName} ${dayNum} at ${hours}:${minutes} ${ampm}`;
+    }
+
+    const timeSpan = document.createElement('span'); timeSpan.className = 'time'; timeSpan.textContent = formattedDisplay; li.appendChild(timeSpan);
+    const countdownSpan = document.createElement('span'); countdownSpan.className = 'countdown'; li.appendChild(countdownSpan);
+
+    if (deadlineDate) {
+      const updateStatus = () => { if (new Date() > deadlineDate) timeSpan.classList.add('time-expired'); else timeSpan.classList.remove('time-expired'); };
+      updateStatus();
+      
+      timerInterval = setInterval(() => {
+        const timeLeft = deadlineDate.getTime() - new Date().getTime();
+        
+        // --- 1 HOUR REMAINING ALERT LOGIC ---
+        // 3600000 milliseconds = exactly 1 hour
+        if (timeLeft <= 3600000 && timeLeft > 0 && !li.hasAttribute('data-1hr-alert') && !isCompleted) {
+          li.setAttribute('data-1hr-alert', 'true'); // Mark it so we don't spam them every second
+          const activeUser = localStorage.getItem('familyActiveUser');
+          if (targetId === `${activeUser}List` || targetId === 'entireFamilyList') {
+              sendNotification("⏳ Task Due Soon!", `"${taskText}" is due in less than 1 hour!`);
+          }
+        }
+
+        if (timeLeft > 0) {
+          const d = Math.floor(timeLeft / (1000 * 60 * 60 * 24)), h = Math.floor((timeLeft / (1000 * 60 * 60)) % 24), m = Math.floor((timeLeft / (1000 * 60)) % 60), s = Math.floor((timeLeft / 1000) % 60);
+          countdownSpan.textContent = `(${d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m ${s}s` : m > 0 ? `${m}m ${s}s` : `${s}s`})`;
+        } else {
+          countdownSpan.classList.add('countdown-expired'); countdownSpan.textContent = '(Task Overdue!)'; timeSpan.classList.add('time-expired'); clearInterval(timerInterval);
+        }
+      }, 1000);
+    }
+
+    const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-btn'; deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', async function() {
+      if (timerInterval) clearInterval(timerInterval);
+      try { await deleteDoc(doc(db, targetId, docId)); } catch(e) { console.error(e); }
+    });
+    li.appendChild(deleteBtn);
+    ul.appendChild(li);
+  }
+
+  function sortList(listId) {
+    const ul = document.getElementById(listId); if (!ul) return;
+    const items = Array.from(ul.querySelectorAll('li'));
+    items.sort((a, b) => {
+      const aC = a.querySelector('input[type="checkbox"]').checked, bC = b.querySelector('input[type="checkbox"]').checked;
+      if (aC && !bC) return 1; if (!aC && bC) return -1;
+      const aD = a.getAttribute('data-deadline'), bD = b.getAttribute('data-deadline');
+      return (aD ? new Date(aD).getTime() : Infinity) - (bD ? new Date(bD).getTime() : Infinity);
+    });
+    items.forEach(li => ul.appendChild(li));
+  }
+</script>
+</body>
+</html>
