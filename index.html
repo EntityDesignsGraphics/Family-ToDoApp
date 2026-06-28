@@ -10,8 +10,9 @@
     .hidden { display: none !important; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal-content { background: white; padding: 40px; border-radius: 8px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 90%; max-width: 400px; }
-    .modal-content select { width: 100%; padding: 12px; margin: 20px 0; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+    .modal-content input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
     .login-btn { width: 100%; font-size: 16px; padding: 12px; }
+    #loginError { color: red; display: none; font-size: 14px; margin-top: 10px; font-weight: bold; }
     .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .logout-btn { background-color: #dc3545; padding: 8px 16px; color: white; border: none; border-radius: 4px; cursor: pointer; }
     .logout-btn:hover { background-color: #c82333; }
@@ -45,14 +46,11 @@
 <div id="loginModal" class="modal-overlay">
   <div class="modal-content">
     <h2>Family To-Do List</h2>
-    <p>Please select your profile to view your tasks.</p>
-    <select id="userSelect">
-      <option value="armaan">Armaan</option>
-      <option value="suhaani">Suhaani</option>
-      <option value="dad">Dad</option>
-      <option value="mom">Mom</option>
-    </select>
+    <p>Please log in to your account.</p>
+    <input type="email" id="loginEmail" placeholder="Email Address">
+    <input type="password" id="loginPassword" placeholder="Password">
     <button id="loginBtn" class="login-btn add-btn">Log In</button>
+    <p id="loginError">Incorrect email or password!</p>
   </div>
 </div>
 
@@ -147,8 +145,9 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  // Import Auth modules!
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAJgVXnV2E1vKngH9xkjFoTEA7ZyuEwE6s",
@@ -161,13 +160,21 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app); // Start Auth
 
-  // --- NOTIFICATION SYSTEM ---
-  // Ask the browser for permission to send pop-ups!
+  // --- MAP EMAILS TO NAMES ---
+  // Ensure these match EXACTLY what you typed into Firebase!
+  const emailToName = {
+    "armaan@family.com": "armaan",
+    "suhaani@family.com": "suhaani",
+    "dad@family.com": "dad",
+    "mom@family.com": "mom"
+  };
+
+  // --- NOTIFICATIONS ---
   if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
     Notification.requestPermission();
   }
-
   function sendNotification(title, bodyText) {
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification(title, { body: bodyText });
@@ -211,21 +218,28 @@
     daySel.addEventListener('change', uncheckToday);
   });
 
-  // --- ACCOUNT & LOGIN LOGIC ---
+  // --- SECURE LOGIN LOGIC ---
   const loginModal = document.getElementById('loginModal');
   const appWrapper = document.getElementById('appWrapper');
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
-  const userSelect = document.getElementById('userSelect');
   const welcomeText = document.getElementById('welcomeText');
+  const loginError = document.getElementById('loginError');
 
-  function checkLoginState() {
-    const activeUser = localStorage.getItem('familyActiveUser');
-    if (activeUser) {
-      loginModal.classList.add('hidden'); appWrapper.classList.remove('hidden');
+  // Listen for login/logout changes securely
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loginModal.classList.add('hidden'); 
+      appWrapper.classList.remove('hidden');
+      
+      // Look up who logged in based on their email
+      const activeUser = emailToName[user.email] || "entireFamily"; 
+      
+      // Save it locally just so the notification logic knows who you are
+      localStorage.setItem('familyActiveUser', activeUser);
+      
       welcomeText.textContent = `Welcome, ${activeUser.charAt(0).toUpperCase() + activeUser.slice(1)}!`;
       
-      // Request permission again if they didn't grant it yet, now that they've interacted with the page
       if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
       }
@@ -235,13 +249,48 @@
         if (section.id === `${activeUser}Section`) section.classList.add('my-section');
       });
     } else {
-      loginModal.classList.remove('hidden'); appWrapper.classList.add('hidden');
+      loginModal.classList.remove('hidden'); 
+      appWrapper.classList.add('hidden');
+      localStorage.removeItem('familyActiveUser');
     }
-  }
+  });
 
-  loginBtn.addEventListener('click', () => { localStorage.setItem('familyActiveUser', userSelect.value); checkLoginState(); });
-  logoutBtn.addEventListener('click', () => { localStorage.removeItem('familyActiveUser'); checkLoginState(); });
-  checkLoginState(); 
+  // Log In Button
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPassword').value;
+    
+    if(!email || !pass) {
+        loginError.textContent = "Please enter an email and password!";
+        loginError.style.display = "block";
+        return;
+    }
+
+    try {
+      // Talk to Google to verify!
+      await signInWithEmailAndPassword(auth, email, pass);
+      loginError.style.display = "none";
+      document.getElementById('loginEmail').value = "";
+      document.getElementById('loginPassword').value = "";
+    } catch (error) {
+      console.error(error);
+      loginError.textContent = "Incorrect email or password!";
+      loginError.style.display = "block";
+    }
+  });
+
+  // Log Out Button
+  logoutBtn.addEventListener('click', () => {
+    signOut(auth);
+  });
+
+  // Allow hitting "Enter" to log in
+  document.getElementById('loginPassword').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        loginBtn.click();
+      }
+  });
+
 
   // --- FIREBASE REAL-TIME LISTENERS ---
   const familyLists = ['armaanList', 'suhaaniList', 'dadList', 'momList', 'entireFamilyList'];
@@ -252,11 +301,9 @@
       const ul = document.getElementById(listId);
       ul.innerHTML = ''; 
       
-      // Check for completely NEW tasks to send a notification
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added" && !initialLoad[listId]) {
             const activeUser = localStorage.getItem('familyActiveUser');
-            // Only alert if the task was added to MY list or the Entire Family list
             if (listId === `${activeUser}List` || listId === 'entireFamilyList') {
                 sendNotification("🆕 New Task Assigned!", `Someone added a new task to your list!`);
             }
@@ -268,8 +315,6 @@
         createTaskElement(listId, doc.id, data.text, data.deadline, data.completed);
       });
       sortList(listId);
-      
-      // Turn off initial load flag after the first run so we don't spam 100 notifications on refresh
       initialLoad[listId] = false; 
     });
   });
@@ -361,10 +406,8 @@
       timerInterval = setInterval(() => {
         const timeLeft = deadlineDate.getTime() - new Date().getTime();
         
-        // --- 1 HOUR REMAINING ALERT LOGIC ---
-        // 3600000 milliseconds = exactly 1 hour
         if (timeLeft <= 3600000 && timeLeft > 0 && !li.hasAttribute('data-1hr-alert') && !isCompleted) {
-          li.setAttribute('data-1hr-alert', 'true'); // Mark it so we don't spam them every second
+          li.setAttribute('data-1hr-alert', 'true'); 
           const activeUser = localStorage.getItem('familyActiveUser');
           if (targetId === `${activeUser}List` || targetId === 'entireFamilyList') {
               sendNotification("⏳ Task Due Soon!", `"${taskText}" is due in less than 1 hour!`);
