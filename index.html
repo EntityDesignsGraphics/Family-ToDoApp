@@ -319,6 +319,9 @@
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
+
+      alert("Firebase thinks your email is: [" + user.email + "]");
+      
       loginModal.classList.add('hidden'); 
       appWrapper.classList.remove('hidden');
       
