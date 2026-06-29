@@ -171,11 +171,22 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
 
-  const emailToName = {
-    "therealgeocraft@gmail.com": "armaan",
-    "suhaani@family.com": "suhaani",
-    "dad@family.com": "dad",
-    "mom@family.com": "mom"
+ const emailToName = {
+    // Armaan's Accounts
+    "therealgeocraft@gmail.com": "armaan", // Google Calendar email
+    "armaan@todolist.com": "armaan",       // App login email
+    
+    // Suhaani's Accounts
+    "gulatisuhaani@gmail.com": "suhaani",   // (Replace with her real Gmail later)
+    "suhaani@todolist.com": "suhaani",     // App login email
+
+    // Dad's Accounts
+    "gagan.gulati@gmail.com": "dad",           // (Replace with his real Gmail later)
+    "dad@todolist.com": "dad",             // App login email
+
+    // Mom's Accounts
+    "priyankagulati7@gmail.com": "mom",           // (Replace with her real Gmail later)
+    "mom@todolist.com": "mom"              // App login email
   };
 
   // --- GOOGLE CALENDAR API LOGIC ---
