@@ -1,0 +1,1 @@
+// Dummy Service Worker to keep Android Chrome happy
