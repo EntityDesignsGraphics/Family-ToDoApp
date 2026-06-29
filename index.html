@@ -171,28 +171,25 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
 
- const emailToName = {
-    // Armaan's Accounts
-    "therealgeocraft@gmail.com": "armaan", // Google Calendar email
-    "armaan@todolist.com": "armaan",       // App login email
-    
-    // Suhaani's Accounts
-    "gulatisuhaani@gmail.com": "suhaani",   // (Replace with her real Gmail later)
-    "suhaani@todolist.com": "suhaani",     // App login email
-
-    // Dad's Accounts
-    "gagan.gulati@gmail.com": "dad",           // (Replace with his real Gmail later)
-    "dad@todolist.com": "dad",             // App login email
-
-    // Mom's Accounts
-    "priyankagulati7@gmail.com": "mom",           // (Replace with her real Gmail later)
-    "mom@todolist.com": "mom"              // App login email
+  const emailToName = {
+    "therealgeocraft@gmail.com": "armaan",
+    "armaan@todolist.com": "armaan",
+    "suhaani@todolist.com": "suhaani",
+    "dad@todolist.com": "dad",
+    "mom@todolist.com": "mom"
   };
 
   // --- GOOGLE CALENDAR API LOGIC ---
   const GOOGLE_CLIENT_ID = '464151332380-92of6jhblmlsfgm2votm5j96u7eedpas.apps.googleusercontent.com';
   let tokenClient;
   let gcalAccessToken = null;
+
+  // 1. Register the hidden Service Worker for Android Chrome
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("Service Worker Active!"))
+      .catch((err) => console.log("Service Worker Failed: ", err));
+  }
 
   window.onload = function () {
     tokenClient = google.accounts.oauth2.initTokenClient({
@@ -248,7 +245,7 @@
     }
   }
 
-  // --- NOTIFICATIONS ---
+  // --- NOTIFICATIONS BUTTON LOGIC ---
   const notifBtn = document.getElementById('notifBtn');
 
   if ("Notification" in window) {
@@ -263,12 +260,19 @@
       });
     });
   } else {
-    notifBtn.style.display = "none"; // Hide if device doesn't support them at all
+    notifBtn.style.display = "none"; 
   }
 
+  // Smart Sender that chooses between Service Worker (Mobile) or Standard Web API (PC)
   function sendNotification(title, bodyText) {
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, { body: bodyText });
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(title, { body: bodyText });
+        });
+      } else {
+        new Notification(title, { body: bodyText });
+      }
     }
   }
 
@@ -319,9 +323,6 @@
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
-
-      alert("Firebase thinks your email is: [" + user.email + "]");
-      
       loginModal.classList.add('hidden'); 
       appWrapper.classList.remove('hidden');
       
