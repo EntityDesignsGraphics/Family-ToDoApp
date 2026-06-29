@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Family To-Do List</title>
   
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; padding: 20px; background-color: #f4f9f9; overflow-y: auto; box-sizing: border-box; }
     .hidden { display: none !important; }
@@ -13,9 +15,13 @@
     .modal-content input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
     .login-btn { width: 100%; font-size: 16px; padding: 12px; }
     #loginError { color: red; display: none; font-size: 14px; margin-top: 10px; font-weight: bold; }
-    .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .btn-group { display: flex; gap: 10px; }
     .logout-btn { background-color: #dc3545; padding: 8px 16px; color: white; border: none; border-radius: 4px; cursor: pointer; }
     .logout-btn:hover { background-color: #c82333; }
+    .cal-btn { background-color: #4285F4; padding: 8px 16px; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .cal-btn:hover { background-color: #3367D6; }
+    .cal-btn:disabled { background-color: #a0c1f7; cursor: not-allowed; }
     .my-section { border: 2px solid #28a745 !important; background-color: #eafbee !important; transform: scale(1.02); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.15) !important; }
     .app-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; }
     .container { width: 100%; max-width: 600px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
@@ -57,7 +63,11 @@
 <div id="appWrapper" class="app-wrapper hidden">
   <div class="header">
     <h2 id="welcomeText" style="margin: 0;">Welcome!</h2>
-    <button id="logoutBtn" class="logout-btn">Log Out</button>
+    <div class="btn-group">
+      <button id="notifBtn" class="cal-btn" style="background-color: #ffc107; color: black;">🔔 Enable Alerts</button>
+      <button id="googleCalBtn" class="cal-btn">📅 Link Calendar</button>
+      <button id="logoutBtn" class="logout-btn">Log Out</button>
+    </div>
   </div>
 
   <div class="container">
@@ -146,7 +156,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  // Import Auth modules!
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -160,10 +169,8 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const auth = getAuth(app); // Start Auth
+  const auth = getAuth(app);
 
-  // --- MAP EMAILS TO NAMES ---
-  // Ensure these match EXACTLY what you typed into Firebase!
   const emailToName = {
     "armaan@todolist.com": "armaan",
     "suhaani@todolist.com": "suhaani",
@@ -171,10 +178,95 @@
     "mom@todolist.com": "mom"
   };
 
-  // --- NOTIFICATIONS ---
-  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
+  // --- GOOGLE CALENDAR API LOGIC ---
+  const GOOGLE_CLIENT_ID = '464151332380-92of6jhblmlsfgm2votm5j96u7eedpas.apps.googleusercontent.com';
+  let tokenClient;
+  let gcalAccessToken = null;
+
+  // Initialize the Google Auth Client once the window loads
+  window.onload = function () {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar.events',
+      callback: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          gcalAccessToken = tokenResponse.access_token;
+          const btn = document.getElementById('googleCalBtn');
+          btn.textContent = "✅ Calendar Linked";
+          btn.disabled = true;
+          alert("Success! Your app is now connected to Google Calendar. Tasks with a date/time will automatically sync!");
+        }
+      },
+    });
+  };
+
+  document.getElementById('googleCalBtn').addEventListener('click', () => {
+    tokenClient.requestAccessToken();
+  });
+
+  // Background function to push the task to Google
+  async function addEventToGoogleCalendar(taskText, isoStringDate) {
+    if (!gcalAccessToken) return; // Only run if they clicked "Link Calendar"
+
+    const eventDate = new Date(isoStringDate);
+    // Let's make the event 1 hour long on the calendar by default
+    const endDate = new Date(eventDate.getTime() + (60 * 60 * 1000)); 
+
+    const event = {
+      'summary': `ToDo: ${taskText}`,
+      'description': 'Added automatically from the Family To-Do App.',
+      'start': {
+        'dateTime': eventDate.toISOString(),
+        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      'end': {
+        'dateTime': endDate.toISOString(),
+        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    };
+
+    try {
+      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + gcalAccessToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+      if (response.ok) {
+        console.log("📅 Successfully pushed to Google Calendar!");
+      }
+    } catch (e) {
+      console.error("Error saving to Google Calendar:", e);
+    }
   }
+  // ---------------------------------
+
+// --- NOTIFICATIONS ---
+  const notifBtn = document.getElementById('notifBtn');
+
+  // Check if their device even supports notifications
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      notifBtn.style.display = "none"; // Hide button if already allowed
+    } else {
+      // Require a physical tap to ask for permission
+      notifBtn.addEventListener('click', () => {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            notifBtn.style.display = "none";
+            sendNotification("✅ Alerts Enabled!", "You will now get notified when a task is due soon.");
+          } else {
+            alert("⚠️ Notifications were blocked. You may need to allow them in your phone's browser settings!");
+          }
+        });
+      });
+    }
+  } else {
+    notifBtn.style.display = "none"; // Hide if device doesn't support them
+  }
+
   function sendNotification(title, bodyText) {
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification(title, { body: bodyText });
@@ -226,18 +318,13 @@
   const welcomeText = document.getElementById('welcomeText');
   const loginError = document.getElementById('loginError');
 
-  // Listen for login/logout changes securely
   onAuthStateChanged(auth, (user) => {
     if (user) {
       loginModal.classList.add('hidden'); 
       appWrapper.classList.remove('hidden');
       
-      // Look up who logged in based on their email
       const activeUser = emailToName[user.email] || "entireFamily"; 
-      
-      // Save it locally just so the notification logic knows who you are
       localStorage.setItem('familyActiveUser', activeUser);
-      
       welcomeText.textContent = `Welcome, ${activeUser.charAt(0).toUpperCase() + activeUser.slice(1)}!`;
       
       if ("Notification" in window && Notification.permission !== "granted") {
@@ -255,7 +342,6 @@
     }
   });
 
-  // Log In Button
   loginBtn.addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPassword').value;
@@ -267,7 +353,6 @@
     }
 
     try {
-      // Talk to Google to verify!
       await signInWithEmailAndPassword(auth, email, pass);
       loginError.style.display = "none";
       document.getElementById('loginEmail').value = "";
@@ -279,18 +364,8 @@
     }
   });
 
-  // Log Out Button
-  logoutBtn.addEventListener('click', () => {
-    signOut(auth);
-  });
-
-  // Allow hitting "Enter" to log in
-  document.getElementById('loginPassword').addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        loginBtn.click();
-      }
-  });
-
+  logoutBtn.addEventListener('click', () => { signOut(auth); });
+  document.getElementById('loginPassword').addEventListener('keypress', function (e) { if (e.key === 'Enter') { loginBtn.click(); } });
 
   // --- FIREBASE REAL-TIME LISTENERS ---
   const familyLists = ['armaanList', 'suhaaniList', 'dadList', 'momList', 'entireFamilyList'];
@@ -361,6 +436,12 @@
         await addDoc(collection(db, targetId), {
           text: taskText, deadline: datetimeText, completed: false, timestamp: new Date().getTime()
         });
+        
+        // ---- PUSH TO GOOGLE CALENDAR IF APPLICABLE ----
+        if (datetimeText && gcalAccessToken) {
+          addEventToGoogleCalendar(taskText, datetimeText);
+        }
+
         textInput.value = ''; resetToToday(section);
         hourSelect.selectedIndex = 0; minuteSelect.selectedIndex = 0; ampmSelect.selectedIndex = 0;
       } catch (e) {
