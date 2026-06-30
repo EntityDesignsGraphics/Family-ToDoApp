@@ -245,20 +245,26 @@
     }
   }
 
-  // --- NOTIFICATIONS BUTTON LOGIC ---
+// --- NOTIFICATIONS BUTTON LOGIC ---
   const notifBtn = document.getElementById('notifBtn');
 
   if ("Notification" in window) {
-    notifBtn.addEventListener('click', () => {
-      Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-          notifBtn.style.display = "none";
-          sendNotification("✅ Alerts Enabled!", "You will now get notified when a task is due soon.");
-        } else {
-          alert("⚠️ Notifications were blocked. You may need to allow them in your phone's browser settings!");
-        }
+    // Check if the browser remembers that we already have permission!
+    if (Notification.permission === "granted") {
+      notifBtn.style.display = "none"; 
+    } else {
+      // If no permission yet, wait for them to click the button
+      notifBtn.addEventListener('click', () => {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            notifBtn.style.display = "none";
+            sendNotification("✅ Alerts Enabled!", "You will now get notified when a task is due soon.");
+          } else {
+            alert("⚠️ Notifications were blocked. You may need to allow them in your phone's browser settings!");
+          }
+        });
       });
-    });
+    }
   } else {
     notifBtn.style.display = "none"; 
   }
