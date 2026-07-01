@@ -27,20 +27,35 @@
     .container { width: 100%; max-width: 600px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
     .section { margin-bottom: 20px; background-color: #f8fcfc; padding: 15px; border-radius: 6px; border: 1px solid #eee; transition: all 0.3s ease; }
     h2 { text-align: center; margin-top: 0; color: #333; }
-    input[type="text"] { width: calc(100% - 40px); padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
-    .datetime-row { display: flex; gap: 5px; margin-bottom: 10px; width: calc(100% - 40px); align-items: center; }
+    
+    /* Input Styling */
+    input[type="text"].main-task-input { width: calc(100% - 40px); padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+    .custom-category-input { width: 100px !important; padding: 8px 5px !important; margin-bottom: 0 !important; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 13px; }
+    
+    .datetime-row { display: flex; gap: 5px; margin-bottom: 10px; width: calc(100% - 40px); align-items: center; flex-wrap: wrap; }
     .today-label { display: flex; align-items: center; font-size: 12px; color: #333; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 7px 6px; cursor: pointer; }
     .today-label input { margin-right: 4px; cursor: pointer; }
     .datetime-row select { flex: 1; padding: 8px 2px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; background-color: white; font-size: 13px; }
+    .priority-select { font-weight: bold; }
+    .category-select { font-weight: bold; background-color: #f8f9fa !important; }
     .add-btn { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: calc(33.3% - 10px); }
     .add-btn:hover { background-color: #218838; }
     ul { list-style-type: none; padding: 0; }
     li { display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 10px; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); flex-wrap: wrap; gap: 10px; border-left: 4px solid #28a745; transition: all 0.3s ease; }
     li.completed { text-decoration: line-through; color: gray; opacity: 0.6; border-left-color: gray; }
-    .task-text { flex-grow: 1; }
-    .time { font-weight: bold; color: #6c757d; }
+    .task-text { flex-grow: 1; font-size: 15px; }
+    
+    /* Badges */
+    .priority-badge { font-size: 11px; padding: 3px 6px; border-radius: 12px; font-weight: bold; white-space: nowrap; }
+    .priority-3 { background-color: #ffeeba; color: #856404; border: 1px solid #ffc107; } 
+    .priority-2 { background-color: #e2e3e5; color: #383d41; border: 1px solid #ced4da; } 
+    .priority-1 { background-color: #d1ecf1; color: #0c5460; border: 1px solid #17a2b8; } 
+    .assigner-badge { font-size: 11px; padding: 3px 6px; border-radius: 12px; background-color: #f8f9fa; color: #6c757d; border: 1px dashed #ced4da; font-style: italic; white-space: nowrap; }
+    .category-badge { font-size: 11px; padding: 3px 6px; border-radius: 12px; font-weight: bold; background-color: #f1f3f5; color: #495057; border: 1px solid #dee2e6; white-space: nowrap; }
+    
+    .time { font-weight: bold; color: #6c757d; font-size: 14px; }
     .time-expired { color: red; }
-    .countdown { font-weight: bold; color: #17a2b8; }
+    .countdown { font-weight: bold; color: #17a2b8; font-size: 14px; }
     .countdown-expired { color: red; }
     .delete-btn { background: #dc3545; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; width: auto; }
     .delete-btn:hover { background-color: #c82333; }
@@ -73,7 +88,7 @@
   <div class="container">
     <div class="section" id="armaanSection">
       <h2>Armaan's Tasks</h2>
-      <input type="text" data-target="armaanList" placeholder="Add a new task...">
+      <input type="text" class="main-task-input" data-target="armaanList" placeholder="Add a new task...">
       <div class="datetime-row">
         <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
         <select class="year-select"></select>
@@ -82,6 +97,20 @@
         <select class="hour-select"><option value="" disabled selected>Hr</option></select>
         <select class="minute-select"><option value="" disabled selected>Min</option></select>
         <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+        <select class="priority-select">
+            <option value="1">🧊 Low</option>
+            <option value="2" selected>⭐ Med</option>
+            <option value="3">🔥 High</option>
+        </select>
+        <select class="category-select">
+            <option value="General" selected>📌 General</option>
+            <option value="Home">🏠 Home</option>
+            <option value="Work">🏢 Work</option>
+            <option value="School">🎒 School</option>
+            <option value="Personal">👤 Personal</option>
+            <option value="Other">✏️ Other...</option>
+        </select>
+        <input type="text" class="custom-category-input hidden" placeholder="Type category...">
       </div>
       <button class="add-btn">Add</button>
       <ul id="armaanList"></ul>
@@ -89,7 +118,7 @@
     
     <div class="section" id="suhaaniSection">
       <h2>Suhaani's Tasks</h2>
-      <input type="text" data-target="suhaaniList" placeholder="Add a new task...">
+      <input type="text" class="main-task-input" data-target="suhaaniList" placeholder="Add a new task...">
       <div class="datetime-row">
         <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
         <select class="year-select"></select>
@@ -98,6 +127,20 @@
         <select class="hour-select"><option value="" disabled selected>Hr</option></select>
         <select class="minute-select"><option value="" disabled selected>Min</option></select>
         <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+        <select class="priority-select">
+            <option value="1">🧊 Low</option>
+            <option value="2" selected>⭐ Med</option>
+            <option value="3">🔥 High</option>
+        </select>
+        <select class="category-select">
+            <option value="General" selected>📌 General</option>
+            <option value="Home">🏠 Home</option>
+            <option value="Work">🏢 Work</option>
+            <option value="School">🎒 School</option>
+            <option value="Personal">👤 Personal</option>
+            <option value="Other">✏️ Other...</option>
+        </select>
+        <input type="text" class="custom-category-input hidden" placeholder="Type category...">
       </div>
       <button class="add-btn">Add</button>
       <ul id="suhaaniList"></ul>
@@ -105,7 +148,7 @@
     
     <div class="section" id="dadSection">
       <h2>Dad's Tasks</h2>
-      <input type="text" data-target="dadList" placeholder="Add a new task...">
+      <input type="text" class="main-task-input" data-target="dadList" placeholder="Add a new task...">
       <div class="datetime-row">
         <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
         <select class="year-select"></select>
@@ -114,6 +157,20 @@
         <select class="hour-select"><option value="" disabled selected>Hr</option></select>
         <select class="minute-select"><option value="" disabled selected>Min</option></select>
         <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+        <select class="priority-select">
+            <option value="1">🧊 Low</option>
+            <option value="2" selected>⭐ Med</option>
+            <option value="3">🔥 High</option>
+        </select>
+        <select class="category-select">
+            <option value="General" selected>📌 General</option>
+            <option value="Home">🏠 Home</option>
+            <option value="Work">🏢 Work</option>
+            <option value="School">🎒 School</option>
+            <option value="Personal">👤 Personal</option>
+            <option value="Other">✏️ Other...</option>
+        </select>
+        <input type="text" class="custom-category-input hidden" placeholder="Type category...">
       </div>
       <button class="add-btn">Add</button>
       <ul id="dadList"></ul>
@@ -121,7 +178,7 @@
     
     <div class="section" id="momSection">
       <h2>Mom's Tasks</h2>
-      <input type="text" data-target="momList" placeholder="Add a new task...">
+      <input type="text" class="main-task-input" data-target="momList" placeholder="Add a new task...">
       <div class="datetime-row">
         <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
         <select class="year-select"></select>
@@ -130,6 +187,20 @@
         <select class="hour-select"><option value="" disabled selected>Hr</option></select>
         <select class="minute-select"><option value="" disabled selected>Min</option></select>
         <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+        <select class="priority-select">
+            <option value="1">🧊 Low</option>
+            <option value="2" selected>⭐ Med</option>
+            <option value="3">🔥 High</option>
+        </select>
+        <select class="category-select">
+            <option value="General" selected>📌 General</option>
+            <option value="Home">🏠 Home</option>
+            <option value="Work">🏢 Work</option>
+            <option value="School">🎒 School</option>
+            <option value="Personal">👤 Personal</option>
+            <option value="Other">✏️ Other...</option>
+        </select>
+        <input type="text" class="custom-category-input hidden" placeholder="Type category...">
       </div>
       <button class="add-btn">Add</button>
       <ul id="momList"></ul>
@@ -137,7 +208,7 @@
     
     <div class="section" id="entireFamilySection">
       <h2>Entire Family</h2>
-      <input type="text" data-target="entireFamilyList" placeholder="Add a family task...">
+      <input type="text" class="main-task-input" data-target="entireFamilyList" placeholder="Add a family task...">
       <div class="datetime-row">
         <label class="today-label"><input type="checkbox" class="today-check" checked>Today</label>
         <select class="year-select"></select>
@@ -146,6 +217,20 @@
         <select class="hour-select"><option value="" disabled selected>Hr</option></select>
         <select class="minute-select"><option value="" disabled selected>Min</option></select>
         <select class="ampm-select"><option value="" disabled selected>AM/PM</option><option value="AM">AM</option><option value="PM">PM</option></select>
+        <select class="priority-select">
+            <option value="1">🧊 Low</option>
+            <option value="2" selected>⭐ Med</option>
+            <option value="3">🔥 High</option>
+        </select>
+        <select class="category-select">
+            <option value="General" selected>📌 General</option>
+            <option value="Home">🏠 Home</option>
+            <option value="Work">🏢 Work</option>
+            <option value="School">🎒 School</option>
+            <option value="Personal">👤 Personal</option>
+            <option value="Other">✏️ Other...</option>
+        </select>
+        <input type="text" class="custom-category-input hidden" placeholder="Type category...">
       </div>
       <button class="add-btn">Add</button>
       <ul id="entireFamilyList"></ul>
@@ -184,7 +269,6 @@
   let tokenClient;
   let gcalAccessToken = null;
 
-  // 1. Register the hidden Service Worker for Android Chrome
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
       .then(() => console.log("Service Worker Active!"))
@@ -201,7 +285,7 @@
           const btn = document.getElementById('googleCalBtn');
           btn.textContent = "✅ Calendar Linked";
           btn.disabled = true;
-          alert("Success! Your app is now connected to Google Calendar. Tasks with a date/time will automatically sync!");
+          alert("Success! Your app is now connected to Google Calendar.");
         }
       },
     });
@@ -213,47 +297,32 @@
 
   async function addEventToGoogleCalendar(taskText, isoStringDate) {
     if (!gcalAccessToken) return;
-
     const eventDate = new Date(isoStringDate);
     const endDate = new Date(eventDate.getTime() + (60 * 60 * 1000)); 
 
     const event = {
       'summary': `ToDo: ${taskText}`,
       'description': 'Added automatically from the Family To-Do App.',
-      'start': {
-        'dateTime': eventDate.toISOString(),
-        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-      },
-      'end': {
-        'dateTime': endDate.toISOString(),
-        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-      }
+      'start': { 'dateTime': eventDate.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone },
+      'end': { 'dateTime': endDate.toISOString(), 'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone }
     };
 
     try {
-      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + gcalAccessToken,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': 'Bearer ' + gcalAccessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify(event)
       });
-      if (response.ok) console.log("📅 Successfully pushed to Google Calendar!");
-    } catch (e) {
-      console.error("Error saving to Google Calendar:", e);
-    }
+    } catch (e) { console.error(e); }
   }
 
-// --- NOTIFICATIONS BUTTON LOGIC ---
+  // --- NOTIFICATIONS BUTTON LOGIC ---
   const notifBtn = document.getElementById('notifBtn');
 
   if ("Notification" in window) {
-    // Check if the browser remembers that we already have permission!
     if (Notification.permission === "granted") {
       notifBtn.style.display = "none"; 
     } else {
-      // If no permission yet, wait for them to click the button
       notifBtn.addEventListener('click', () => {
         Notification.requestPermission().then(permission => {
           if (permission === "granted") {
@@ -269,7 +338,6 @@
     notifBtn.style.display = "none"; 
   }
 
-  // Smart Sender that chooses between Service Worker (Mobile) or Standard Web API (PC)
   function sendNotification(title, bodyText) {
     if ("Notification" in window && Notification.permission === "granted") {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -300,6 +368,19 @@
     const daySel = section.querySelector('.day-select');
     todayCheck.checked = true; yearSel.value = currentYear.toString(); monthSel.value = currentMonth; daySel.value = currentDay;
   }
+
+  // Listen for the "Other" category selection to slide out the text box
+  document.querySelectorAll('.category-select').forEach(select => {
+    select.addEventListener('change', (e) => {
+      const customInput = e.target.parentElement.querySelector('.custom-category-input');
+      if (e.target.value === 'Other') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+      }
+    });
+  });
 
   document.querySelectorAll('.section').forEach(section => {
     resetToToday(section); 
@@ -350,26 +431,20 @@
   loginBtn.addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPassword').value;
-    
-    if(!email || !pass) {
-        loginError.textContent = "Please enter an email and password!";
-        loginError.style.display = "block";
-        return;
-    }
-
+    if(!email || !pass) { loginError.textContent = "Please enter an email and password!"; loginError.style.display = "block"; return; }
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       loginError.style.display = "none";
-      document.getElementById('loginEmail').value = "";
-      document.getElementById('loginPassword').value = "";
+      document.getElementById('loginEmail').value = ""; document.getElementById('loginPassword').value = "";
     } catch (error) {
-      console.error(error);
-      loginError.textContent = "Incorrect email or password!";
-      loginError.style.display = "block";
+      loginError.textContent = "Incorrect email or password!"; loginError.style.display = "block";
     }
   });
 
-  logoutBtn.addEventListener('click', () => { signOut(auth); });
+  logoutBtn.addEventListener('click', () => { 
+    signOut(auth).then(() => { window.location.reload(); });
+  });
+  
   document.getElementById('loginPassword').addEventListener('keypress', function (e) { if (e.key === 'Enter') { loginBtn.click(); } });
 
   // --- FIREBASE REAL-TIME LISTENERS ---
@@ -392,7 +467,11 @@
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        createTaskElement(listId, doc.id, data.text, data.deadline, data.completed);
+        const priorityVal = data.priority || 2; 
+        const assignerVal = data.assigner || null; 
+        const categoryVal = data.category || "General"; 
+        
+        createTaskElement(listId, doc.id, data.text, data.deadline, data.completed, priorityVal, assignerVal, categoryVal);
       });
       sortList(listId);
       initialLoad[listId] = false; 
@@ -406,13 +485,16 @@
     button.addEventListener('click', async function(event) {
       event.preventDefault(); 
       const section = this.parentElement;
-      const textInput = section.querySelector('input[type="text"]');
+      const textInput = section.querySelector('input[type="text"].main-task-input');
       const yearSelect = section.querySelector('.year-select');
       const monthSelect = section.querySelector('.month-select');
       const daySelect = section.querySelector('.day-select');
       const hourSelect = section.querySelector('.hour-select');
       const minuteSelect = section.querySelector('.minute-select');
       const ampmSelect = section.querySelector('.ampm-select');
+      const prioritySelect = section.querySelector('.priority-select'); 
+      const categorySelect = section.querySelector('.category-select'); 
+      const customCategoryInput = section.querySelector('.custom-category-input');
 
       const taskText = textInput.value.trim();
       if (taskText === '') { alert('⚠️ Please enter a task first!'); return; }
@@ -431,40 +513,110 @@
         const tempDate = new Date(selectedYear, parseInt(monthSelect.value), parseInt(daySelect.value), hours24, parseInt(minuteSelect.value));
         datetimeText = tempDate.toISOString();
       } else {
-        alert('⚠️ To set a deadline, please make sure the Date and Time are fully selected! Otherwise, leave the Time blank.');
+        alert('⚠️ To set a deadline, please make sure the Date and Time are fully selected!');
         return;
       }
 
+      // Check if they used the custom category
+      let categoryStr = categorySelect.value;
+      if (categoryStr === 'Other') {
+        categoryStr = customCategoryInput.value.trim();
+        if (categoryStr === '') {
+            alert('⚠️ Please type a name for your custom category!');
+            return;
+        }
+      }
+
       const targetId = textInput.getAttribute('data-target');
+      const priorityNum = parseInt(prioritySelect.value);
+      const activeUser = localStorage.getItem('familyActiveUser') || 'unknown';
       
       try {
         await addDoc(collection(db, targetId), {
-          text: taskText, deadline: datetimeText, completed: false, timestamp: new Date().getTime()
+          text: taskText, 
+          deadline: datetimeText, 
+          completed: false, 
+          timestamp: new Date().getTime(), 
+          priority: priorityNum,
+          assigner: activeUser,
+          category: categoryStr 
         });
         
         if (datetimeText && gcalAccessToken) {
           addEventToGoogleCalendar(taskText, datetimeText);
         }
 
+        // Reset everything back to normal
         textInput.value = ''; resetToToday(section);
-        hourSelect.selectedIndex = 0; minuteSelect.selectedIndex = 0; ampmSelect.selectedIndex = 0;
+        hourSelect.selectedIndex = 0; minuteSelect.selectedIndex = 0; ampmSelect.selectedIndex = 0; 
+        prioritySelect.value = "2"; 
+        categorySelect.value = "General";
+        customCategoryInput.value = "";
+        customCategoryInput.classList.add('hidden'); // Hide the custom box again
+        
       } catch (e) {
         console.error("❌ Error adding document: ", e);
       }
     });
   });
 
-  function createTaskElement(targetId, docId, taskText, datetimeText, isCompleted) {
+  function createTaskElement(targetId, docId, taskText, datetimeText, isCompleted, priority, assigner, category) {
     const ul = document.getElementById(targetId);
     if (!ul) return;
-    const li = document.createElement('li'); li.setAttribute('data-deadline', datetimeText); 
-    const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = isCompleted;
+    const li = document.createElement('li'); 
+    li.setAttribute('data-deadline', datetimeText); 
+    li.setAttribute('data-priority', priority); 
+    
+    // --- PERMISSION CHECK ---
+    const activeUser = localStorage.getItem('familyActiveUser');
+    const canEdit = (targetId === `${activeUser}List` || targetId === 'entireFamilyList');
+
+    const checkbox = document.createElement('input'); 
+    checkbox.type = 'checkbox'; 
+    checkbox.checked = isCompleted;
     if (isCompleted) li.classList.add('completed');
     
-    checkbox.addEventListener('change', async function() {
-      try { await updateDoc(doc(db, targetId, docId), { completed: this.checked }); } catch(e) { console.error(e); }
-    });
+    if (!canEdit) {
+      checkbox.disabled = true;
+      checkbox.style.cursor = 'not-allowed';
+    } else {
+      checkbox.addEventListener('change', async function() {
+        try { await updateDoc(doc(db, targetId, docId), { completed: this.checked }); } catch(e) { console.error(e); }
+      });
+    }
     li.appendChild(checkbox);
+
+    // --- CATEGORY BADGE (WITH SMART EMOJI LOGIC) ---
+    const categoryBadge = document.createElement('span');
+    categoryBadge.className = 'category-badge';
+    
+    let catEmoji = "📌"; // Default
+    if (category === "Home") catEmoji = "🏠";
+    else if (category === "Work") catEmoji = "🏢";
+    else if (category === "School") catEmoji = "🎒";
+    else if (category === "Personal") catEmoji = "👤";
+    else if (category !== "General") catEmoji = "🏷️"; // Give the custom ones a cool tag emoji!
+    
+    categoryBadge.textContent = `${catEmoji} ${category}`;
+    li.appendChild(categoryBadge);
+
+    // --- PRIORITY BADGE ---
+    const priorityBadge = document.createElement('span');
+    priorityBadge.className = `priority-badge priority-${priority}`;
+    priorityBadge.textContent = priority === 3 ? '🔥 High' : priority === 1 ? '🧊 Low' : '⭐ Med';
+    li.appendChild(priorityBadge);
+    
+    // --- ASSIGNER BADGE ---
+    if (assigner) {
+      const listOwner = targetId.replace('List', '');
+      if (assigner !== listOwner) {
+        const assignerName = assigner.charAt(0).toUpperCase() + assigner.slice(1);
+        const assignerBadge = document.createElement('span');
+        assignerBadge.className = 'assigner-badge';
+        assignerBadge.textContent = `👤 from ${assignerName}`;
+        li.appendChild(assignerBadge);
+      }
+    }
 
     const taskSpan = document.createElement('span'); taskSpan.textContent = taskText; taskSpan.className = 'task-text'; li.appendChild(taskSpan);
 
@@ -493,7 +645,6 @@
         
         if (timeLeft <= 3600000 && timeLeft > 0 && !li.hasAttribute('data-1hr-alert') && !isCompleted) {
           li.setAttribute('data-1hr-alert', 'true'); 
-          const activeUser = localStorage.getItem('familyActiveUser');
           if (targetId === `${activeUser}List` || targetId === 'entireFamilyList') {
               sendNotification("⏳ Task Due Soon!", `"${taskText}" is due in less than 1 hour!`);
           }
@@ -508,24 +659,40 @@
       }, 1000);
     }
 
-    const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-btn'; deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', async function() {
-      if (timerInterval) clearInterval(timerInterval);
-      try { await deleteDoc(doc(db, targetId, docId)); } catch(e) { console.error(e); }
-    });
-    li.appendChild(deleteBtn);
+    if (canEdit) {
+      const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-btn'; deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', async function() {
+        if (timerInterval) clearInterval(timerInterval);
+        try { await deleteDoc(doc(db, targetId, docId)); } catch(e) { console.error(e); }
+      });
+      li.appendChild(deleteBtn);
+    }
+    
     ul.appendChild(li);
   }
 
+  // --- THE NEW MULTI-TIER SORTING ALGORITHM ---
   function sortList(listId) {
     const ul = document.getElementById(listId); if (!ul) return;
     const items = Array.from(ul.querySelectorAll('li'));
+    
     items.sort((a, b) => {
-      const aC = a.querySelector('input[type="checkbox"]').checked, bC = b.querySelector('input[type="checkbox"]').checked;
-      if (aC && !bC) return 1; if (!aC && bC) return -1;
-      const aD = a.getAttribute('data-deadline'), bD = b.getAttribute('data-deadline');
-      return (aD ? new Date(aD).getTime() : Infinity) - (bD ? new Date(bD).getTime() : Infinity);
+      const aCompleted = a.querySelector('input[type="checkbox"]').checked;
+      const bCompleted = b.querySelector('input[type="checkbox"]').checked;
+      if (aCompleted && !bCompleted) return 1; 
+      if (!aCompleted && bCompleted) return -1;
+      
+      const aPriority = parseInt(a.getAttribute('data-priority'));
+      const bPriority = parseInt(b.getAttribute('data-priority'));
+      if (aPriority !== bPriority) {
+          return bPriority - aPriority; 
+      }
+      
+      const aDeadline = a.getAttribute('data-deadline');
+      const bDeadline = b.getAttribute('data-deadline');
+      return (aDeadline ? new Date(aDeadline).getTime() : Infinity) - (bDeadline ? new Date(bDeadline).getTime() : Infinity);
     });
+    
     items.forEach(li => ul.appendChild(li));
   }
 </script>
